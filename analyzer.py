@@ -1,8 +1,10 @@
 import re
+import csv
 from collections import defaultdict
 
 LOG_FILE = "logs/auth.log"
-THRESHOLD = 3  # brute-force alert threshold
+THRESHOLD = 3
+OUTPUT_FILE = "report.csv"
 
 failed_logins = defaultdict(int)
 
@@ -16,9 +18,17 @@ with open(LOG_FILE, "r") as file:
 
 print("=== SIEM LOGIN FAILURE REPORT ===")
 
-for ip, count in failed_logins.items():
-    print(f"IP Address: {ip} | Failed Attempts: {count}")
-    if count >= THRESHOLD:
-        print(f"⚠️ ALERT: Possible brute-force attack detected from {ip}")
+with open(OUTPUT_FILE, "w", newline="") as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(["IP Address", "Failed Attempts", "Alert"])
 
+    for ip, count in failed_logins.items():
+        alert = "YES" if count >= THRESHOLD else "NO"
+        print(f"IP Address: {ip} | Failed Attempts: {count}")
+        if alert == "YES":
+            print(f"⚠️ ALERT: Possible brute-force attack detected from {ip}")
+
+        writer.writerow([ip, count, alert])
+
+print(f"\nReport saved to {OUTPUT_FILE}")
 print("=== END REPORT ===")
